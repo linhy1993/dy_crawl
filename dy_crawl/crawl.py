@@ -1,9 +1,9 @@
 # coding=utf-8
+import glob
 import os
 import sys
 import time
 from contextlib import closing
-from datetime import datetime
 from urllib.parse import urlparse
 
 import requests
@@ -14,8 +14,8 @@ from dy_crawl.settings import Config
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-if not os.path.exists(os.path.dirname(Config.OUTPUT_PATH)):
-    os.makedirs(os.path.dirname(Config.OUTPUT_PATH))
+if not os.path.exists(Config.OUTPUT_PATH):
+    os.makedirs(Config.OUTPUT_PATH)
 
 
 class DouYinDownloader(object):
@@ -30,6 +30,10 @@ class DouYinDownloader(object):
             return response.headers['Location']
         else:
             return self.share_url
+
+    def is_duplicated(self, filename):
+        mp4s = glob.glob(os.path.join(Config.OUTPUT_PATH, "*.mp4"))
+        return True if filename in mp4s else False
 
     def download(self, url):
         response = requests.get(url, headers=Config.HEADERS)
@@ -48,7 +52,7 @@ class DouYinDownloader(object):
         for item in inputs:
             temp = item.get('name')
             if temp == 'shareDesc':
-                video_name = item.get('value')[:5] + '-' + str(datetime.now())
+                video_name = item.get('value')
                 break
 
         size = 0
@@ -59,17 +63,20 @@ class DouYinDownloader(object):
 
             if response.status_code == 200:
                 print('[INFO]: File Size is :%0.2f MB %s \n' % (content_size / chunk_size / 1024, video_name + '.mp4'))
-
-                with open(os.path.join(Config.OUTPUT_PATH, video_name + '.mp4'), 'wb') as file:
-                    for data in response.iter_content(chunk_size=chunk_size):
-                        file.write(data)
-                        size += len(data)
-                        file.flush()
-                        sys.stdout.write('[INFO]: Downloading: %.2f%% %s' % (
-                            float(size / content_size * 100), video_name + '.mp4 \r'))
-                        sys.stdout.flush()
-
-                sys.stdout.write('\n')
+                # check dup
+                filename = os.path.join(Config.OUTPUT_PATH, video_name + '.mp4')
+                if self.is_duplicated(filename):
+                    print(f'[INFO]: File {filename} is duplicated.')
+                else:
+                    with open(filename, 'wb') as file:
+                        for data in response.iter_content(chunk_size=chunk_size):
+                            file.write(data)
+                            size += len(data)
+                            file.flush()
+                            sys.stdout.write('[INFO]: Downloading: %.2f%% %s' % (
+                                float(size / content_size * 100), video_name + '.mp4 \r'))
+                            sys.stdout.flush()
+                    sys.stdout.write('\n')
 
     def run(self):
 

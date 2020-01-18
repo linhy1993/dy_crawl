@@ -1,4 +1,8 @@
+import os
+
+
 class Config:
+    BASEDIR = os.path.abspath(os.path.dirname(__file__))
     HEADERS = {
         'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
         'accept-encoding': 'gzip, deflate, br',
@@ -15,4 +19,4 @@ class Config:
                'www.iesdouyin.com',
                'aweme.snssdk.com']
 
-    OUTPUT_PATH = 'output/'
+    OUTPUT_PATH = os.path.join(BASEDIR, 'output3')

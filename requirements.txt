@@ -1,3 +1,4 @@
 lxml==4.4.2
 requests==2.22.0
 beautifulsoup4==4.8.2
+moviepy==1.0.0
